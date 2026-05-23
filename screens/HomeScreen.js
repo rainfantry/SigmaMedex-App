@@ -1,104 +1,99 @@
-import React from 'react'; //Import useEffect and usestate
+import React from 'react';
 import { ScrollView, View, StyleSheet} from 'react-native';
 import { Text, Button, Card, ActivityIndicator } from 'react-native-paper';
 
-
 export default function HomeScreen({ navigation }) {
 
-//Define ARRAY data here
-const DATA = [
-    {id: 1, title: "Placeholder1", description:"Some details here1"},
-    {id: 2, title: "Placeholder2", description:"Some details here2"},
-    {id: 3, title: "Placeholder3", description:"Some details here3"},
-    {id: 4, title: "Placeholder4", description:"Some details here4"},
-    {id: 5, title: "Placeholder5", description:"Some details here5"},
-    {id: 6, title: "Placeholder6", description:"Some details here6"},
-];
-
-//Remote data here
-const [events, setEvents] = React.useState([]);
-const [loading, setLoading] = React.useState(false); //Add cool spin animation part2
+const [medications, setMedications] = React.useState([]);
+const [loading, setLoading] = React.useState(false);
 const [error, setError] = React.useState('');
 
-const EVENTS_URL = 'https://tafeshaun.github.io/elevate-data/events.json';
+const MEDICATIONS_URL = 'https://rainfantry.github.io/sigmamedex-data/medications.json';
 
-const loadEvents = async () => {
+const loadMedications = async () => {
     try{
         setLoading(true);
         setError('');
-        const response = await fetch(EVENTS_URL);
+        const response = await fetch(MEDICATIONS_URL);
         if(!response.ok){
-            throw new Error('Network response failed. Panic!')
+            throw new Error('Network response failed.')
         }
         const text = await response.text();
-        const cleaned = text.replace(/^\uFEFF/, ''); //Clean
+        const cleaned = text.replace(/^﻿/, '');
         const data = JSON.parse(cleaned);
-        setEvents(data);
+        setMedications(data.medications);
     }
     catch (e){
-        setError('Could not load any events. Check git connection and maybe panic more');
+        setError('Could not load medications. Check network connection.');
         console.error(e);
     }
     finally {
         setLoading(false);
     }
- 
 }
 
 React.useEffect(() => {
-    loadEvents();
+    loadMedications();
 }, []);
 
     return (
         <ScrollView style={styles.container}>
 
         <Text variant='headlineMedium' style={styles.title}>
-            Medicine Tracker
+            George's Meds
         </Text>
 
-        {/* ADD ERROR MSG HERE FOR LATER TESTING */}
+        <Text variant='bodySmall' style={styles.subtitle}>
+            {medications.length} medications loaded from SQL Server
+        </Text>
+
         {!!error && <Text style={{color: '#ff0000'}}>{error}</Text>}
 
-        {/* Add cool spin animation part2 */}
         {loading && <ActivityIndicator animating size="large" style={{ marginTop: 80 }} />}
 
-        {events.map(event => (
+        {medications.map(med => (
         <Card
-            key={String(event.id)}
+            key={String(med.Medication_ID)}
             style={styles.card}
-            onPress={() => navigation.navigate("Details", { item: event })} //PARAMS!
+            onPress={() => navigation.navigate("Details", { item: med })}
         >
-            {/* Added subtitle to show date field from the remote JSON */}
-            <Card.Title title={event.title} subtitle={event.date}/>
-                <Card.Content>
-                    <Text variant="bodyMedium">{event.description}</Text>
-                </Card.Content>
+            <Card.Title
+                title={med.ProductName}
+                subtitle={`${med.ActiveIngredient || 'No active ingredient listed'} • ${med.DosageForm_Ref || 'Form unknown'}`}
+            />
+            <Card.Content>
+                <Text variant="bodyMedium">{med.CodexDescriptor}</Text>
+                <Text variant="bodySmall" style={{ marginTop: 8, color: '#666' }}>
+                    Strength: {med.Strength || 'N/A'}  •  AUD ${med.AUDPerStrip ?? '?'}/strip
+                </Text>
+                <Text variant="bodySmall" style={{ color: '#888' }}>
+                    Category: {med.Category_Ref}
+                </Text>
+            </Card.Content>
         </Card>
         ))}
         </ScrollView>
     );
 }
 
-//PASTE STYLES HERE LATER
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 15,
-        backgroundColor: '#98d6ff'
+        backgroundColor: '#e8f4ff'
     },
     title: {
-        marginBottom:12,
+        marginBottom:4,
         fontWeight: 'bold',
-        color: '#595959',
+        color: '#1a3a5c',
     },
     subtitle: {
-        textAlign: 'center', 
-        marginBottom:24, 
-        color: '#be5403'
+        marginBottom:16,
+        color: '#666',
     },
     button: {
         marginTop: 8,
-        backgroundColor: '#ed019a',
+        backgroundColor: '#1a73e8',
     },
     card: {
         marginBottom: 12,
